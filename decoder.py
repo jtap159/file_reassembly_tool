@@ -3,12 +3,7 @@ from operator import itemgetter
 import pandas as pd
 
 
-def reassemble_frags(input_file):
-    """
-    * make a case to handle if file does not have a new line at the end of the file i.e. /n on last fragment
-    :param input_file:
-    :return:
-    """
+def decode_frags(input_file):
     decoded_frags = []
     anchor_frag_index = None
     for i, line in enumerate(input_file):
@@ -16,7 +11,16 @@ def reassemble_frags(input_file):
         decoded_frags.append(decoded_frag)
         if len(decoded_frag) < 15:  # check for a right anchor point with a frag less than 15 characters
             anchor_frag_index = i
+    return decoded_frags, anchor_frag_index
 
+
+def reassemble_frags(input_file):
+    """
+    * make a case to handle if file does not have a new line at the end of the file i.e. /n on last fragment
+    :param input_file:
+    :return:
+    """
+    decoded_frags, anchor_frag_index = decode_frags(input_file)
     # the starting point for reassembling the fragments
     # if anchor_frag_index is not None value then the anchor fragment is the last fragment (a.k.a. right anchor)
     # if no fragment with less than 15 characters is found then the first fragment in decoded_frags will be the anchor
