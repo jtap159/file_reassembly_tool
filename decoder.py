@@ -1,5 +1,7 @@
 from urllib.parse import unquote_plus
 from operator import itemgetter
+import pandas as pd
+
 
 def reassemble_frags(input_file):
     """
@@ -28,17 +30,25 @@ def reassemble_frags(input_file):
     if right_anchor:
         # use the right anchor to build to the left
         # find the best match fragment to the right anchor
-        matched_frags = {}
+        matched_frags = []
         for i, frag in enumerate(decoded_frags):
+            # The right side of a fragment will match with the right anchor
             if frag[-3:] in anchor_frag:
-                matched_frags.update({frag: {'score': 3, 'index': i}})  # fragment will overlap by at least 3 characters
-                characters = -4
-                while characters > -15:
-                    if frag[characters:] in anchor_frag:
-                        matched_frags[frag]['score'] += 1
-                        characters -= 1
+                num_of_characters = -4
+                while num_of_characters > -15:
+                    if frag[num_of_characters:] in anchor_frag:
+                        num_of_characters -= 1
                     else:
+                        # found how many characters overlap, calculate score
+                        matched_frags.append({'score': (num_of_characters * -1) - 1, 'frag_index': i})
                         break
+        df = pd.DataFrame(matched_frags)
+        df.sort_values(by='score', ascending=False, ignore_index=True, inplace=True)
+        max_score = df.loc[0, 'score']
+        # need to add a condition for this situation when multiple fragments have the same max score
+        if len(df[df['score'] == max_score]) > 1:
+            print("this will be a problem")
+        best_match_index = df.loc[0, 'frag_index']
 
     return decoded_frags, anchor_frag_index
 
