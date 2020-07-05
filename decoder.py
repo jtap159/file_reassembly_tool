@@ -32,27 +32,33 @@ def reassemble_frags(input_file):
         right_anchor = False
 
     if right_anchor:
+        reassembled_string = anchor_frag
         # use the right anchor to build to the left
-        # find the best match fragment to the right anchor
-        matched_frags = []
-        for i, frag in enumerate(decoded_frags):
-            # The right side of a fragment will match with the right anchor
-            if frag[-3:] in anchor_frag:
-                num_of_characters = -4
-                while num_of_characters > -15:
-                    if frag[num_of_characters:] in anchor_frag:
-                        num_of_characters -= 1
-                    else:
-                        # found how many characters overlap, calculate score
-                        matched_frags.append({'score': (num_of_characters * -1) - 1, 'frag_index': i})
-                        break
-        df = pd.DataFrame(matched_frags)
-        df.sort_values(by='score', ascending=False, ignore_index=True, inplace=True)
-        max_score = df.loc[0, 'score']
-        # need to add a condition for this situation when multiple fragments have the same max score
-        if len(df[df['score'] == max_score]) > 1:
-            print("this will be a problem")
-        best_match_index = df.loc[0, 'frag_index']
+        for j in range(0, 3):
+            # find the best match fragment to the right anchor
+            matched_frags = []
+            for i, frag in enumerate(decoded_frags):
+                # The right side of a fragment will match with the "right" anchor
+                if frag[-3:] in anchor_frag:
+                    num_of_characters = -4
+                    while num_of_characters > -15:
+                        if frag[num_of_characters:] in anchor_frag:
+                            num_of_characters -= 1
+                        else:
+                            # found how many characters overlap, calculate score
+                            matched_frags.append({'overlap': num_of_characters + 1, 'frag_index': i})
+                            break
+            df = pd.DataFrame(matched_frags)
+            df.sort_values(by='overlap', ascending=True, ignore_index=True, inplace=True)
+            max_overlap = df.loc[0, 'overlap']
+            # need to add a condition for this situation when multiple fragments have the same max score
+            if len(df[df['overlap'] == max_overlap]) > 1:
+                print("this will be a problem")
+            best_match_index = df.loc[0, 'frag_index']
+            best_match_frag = decoded_frags.pop(best_match_index)
+            anchor_frag = best_match_frag  # keep working to the left
+            reassembled_string = best_match_frag[:max_overlap] + reassembled_string
+
 
     return decoded_frags, anchor_frag_index
 
