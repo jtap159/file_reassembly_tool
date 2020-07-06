@@ -1,85 +1,71 @@
 from urllib.parse import unquote_plus, unquote
 
 
-def decode_frags(input_file):
-    # decode & collect each fragment and remove carrier return /n
-    decoded_frags = [unquote(line[:-1]) for line in input_file]
+def check_matches(list_of_fragments, anchor_fragment):
+    """
+    Check how each fragment in the list of fragments fits to the anchor fragment
+    """
+    max_overlap = 14 if len(anchor_fragment) >= 15 else len(anchor_fragment)
+    info = {"num_of_left_matches": 0, "left_matches": [],
+            "num_of_right_matches": 0, "right_matches": []}
+    for i, frag in enumerate(list_of_fragments):  # check every fragment to see if they fit to the anchor fragment
+        for j in range(max_overlap, 2, -1):
+            if frag[-j:] == anchor_fragment[:j]:  # check for match left of anchor
+                info["num_of_left_matches"] += 1
+                info["left_matches"].append({"frag": frag, "spliced_frag": frag[:-j]})
+                break
+            elif anchor_fragment[-j:] == frag[:j]:  # check for match right of anchor
+                info["num_of_right_matches"] += 1
+                info["right_matches"].append({"frag": frag, "spliced_frag": frag[j:]})
+                break
+    return info
+
+
+def assemble_frags(input_file):
+    decoded_frags = [unquote(line[:-1]) for line in input_file]  # remove the \n at end of each line, leave +
+    while len(decoded_frags) > 1:
+        for k in range(0, len(decoded_frags)):
+            temp_decoded_frags = decoded_frags.copy()
+            anchor_frag = temp_decoded_frags.pop(k)
+            # find how each fragment in the temp list matches to the anchor frag
+            anchor_match_info = check_matches(temp_decoded_frags, anchor_frag)
+            if anchor_match_info["num_of_left_matches"] == 1 and anchor_match_info["num_of_right_matches"] == 1:
+                decoded_frags.remove(anchor_frag)
+                decoded_frags.remove(anchor_match_info["left_matches"][0]['frag'])
+                decoded_frags.remove(anchor_match_info["right_matches"][0]['frag'])
+                left_splice_frag = anchor_match_info["left_matches"][0]['spliced_frag']
+                right_splice_frag = anchor_match_info["right_matches"][0]['spliced_frag']
+                combine_frags = left_splice_frag + anchor_frag + right_splice_frag
+                decoded_frags.append(combine_frags)
+                break
+            elif anchor_match_info["num_of_left_matches"] == 1:
+                decoded_frags.remove(anchor_frag)
+                decoded_frags.remove(anchor_match_info["left_matches"][0]['frag'])
+                left_splice_frag = anchor_match_info["left_matches"][0]['spliced_frag']
+                combine_frags = left_splice_frag + anchor_frag
+                decoded_frags.append(combine_frags)
+                break
+            elif anchor_match_info["num_of_right_matches"] == 1:
+                decoded_frags.remove(anchor_frag)
+                decoded_frags.remove(anchor_match_info["right_matches"][0]['frag'])
+                right_splice_frag = anchor_match_info["right_matches"][0]['spliced_frag']
+                combine_frags = anchor_frag + right_splice_frag
+                decoded_frags.append(combine_frags)
+                break
     return decoded_frags
 
 
-decoded_frags_ordered = ['//+Sample+progr',
-                         'program\npublic+',
-                         'ublic+class+Hel',
-                         'lass+HelloWorld',
-                         'elloWorld+{\n+++',
-                         'd+{\n++++public+',
-                         'public+static+v',
-                         'c+static+void+m',
-                         'id+main(String[',
-                         '(String[]+args)',
-                         'args)+{\n+++++++',
-                         '++++++//+Prints',
-                         '//+Prints+"Hell',
-                         'ts+"Hello,+Worl',
-                         ',+World"+to+the',
-                         '"+to+the+termin',
-                         'rminal+window.\n',
-                         'ow.\n++++++++Sys',
-                         '+++++++System.o',
-                         'stem.out.printl',
-                         'intln("Hello,+W',
-                         'o,+World");\n+++',
-                         'rld");\n++++}\n}\n',
-                         ';\n++++}\n}\n']
-
-decoded_frags_shuffled = ['stem.out.printl',
-                          'e+terminal+wind',
-                          'ain(String[]+ar',
-                          's)+{\n++++++++//',
-                          'window.\n+++++++',
-                          'ello,+World");\n',
-                          'println("Hello,',
-                          '+class+HelloWor',
-                          'rints+"Hello,+W',
-                          'c+static+void+m',
-                          '//+Sample+progr',
-                          'tic+void+main(S',
-                          '");\n++++}\n}\n',
-                          '++++++++System.',
-                          'm\npublic+class+',
-                          'ple+program\npub',
-                          '++public+static',
-                          'ello,+World"+to',
-                          '[]+args)+{\n++++',
-                          's+HelloWorld+{\n',
-                          '+++++//+Prints+',
-                          'ld"+to+the+term',
-                          'World+{\n++++pub']
-
-
-def assemble_frags(decoded_frags):
-    while len(decoded_frags) > 1:
-        for k in range(0, len(decoded_frags)):  # use every fragment as an anchor and check for how many matches they have, left
-            temp_decoded_frags = decoded_frags.copy()
-            anchor_frag = temp_decoded_frags.pop(k)
-            max_overlap = 14 if len(anchor_frag) == 15 else len(anchor_frag)
-            num_of_matches = 0
-            matches = []
-            for i, frag in enumerate(temp_decoded_frags):  # check every fragment to see if they fit to the anchor fragment
-                for j in range(max_overlap, 2, -1):
-                    if frag[-j:] == anchor_frag[:j]:  # match left
-                        num_of_matches += 1
-                        matches.append({"frag": frag, "spliced_frag": frag[:-j]})  # remove the overlapping characters so it can be combined with the anchor
-                        break
-            if num_of_matches == 1:
-                decoded_frags.remove(anchor_frag)
-                decoded_frags.remove(matches[0]['frag'])
-                combine_frags = matches[0]['spliced_frag'] + anchor_frag
-                decoded_frags.append(combine_frags)
-                break
-    return decoded_frags[0]
-
-
 if __name__ == "__main__":
-    # assemble_frags_shuffled = assemble_frags(decoded_frags_shuffled)
-    assemble_frags_ordered = assemble_frags(decoded_frags_ordered)
+    # file_ordered = open("frag_files/hello-ordered-frags.txt", "r")
+    # assemble_frags_ordered = assemble_frags(file_ordered)[0].replace("+", " ")
+    # print('ordered\n')
+    # print(assemble_frags_ordered)
+    # print('\n')
+    # file_ordered.close()
+    file_shuffled = open("frag_files/hello-frags.txt", "r")
+    assemble_frags_shuffled = assemble_frags(file_shuffled)[0].replace("+", " ")
+    print('shuffled\n')
+    print(assemble_frags_shuffled)
+    file_shuffled.close()
+
+
