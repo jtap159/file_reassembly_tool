@@ -23,12 +23,18 @@ def check_matches(list_of_fragments, anchor_fragment):
 
 def assemble_frags(input_file):
     decoded_frags = [unquote(line[:-1]) for line in input_file]  # remove the \n at end of each line, leave +
+    left_end = None
+    right_end = None
     while len(decoded_frags) > 1:
         for k in range(0, len(decoded_frags)):
             temp_decoded_frags = decoded_frags.copy()
             anchor_frag = temp_decoded_frags.pop(k)
             # find how each fragment in the temp list matches to the anchor frag
             anchor_match_info = check_matches(temp_decoded_frags, anchor_frag)
+            if anchor_match_info["num_of_left_matches"] == 0:
+                left_end = anchor_frag
+            elif anchor_match_info["num_of_right_matches"] == 0:
+                right_end = anchor_frag
             if anchor_match_info["num_of_left_matches"] == 1 and anchor_match_info["num_of_right_matches"] == 1:
                 combine_frags = anchor_frag
                 # first check the left match for compatibility
@@ -104,6 +110,9 @@ def assemble_frags(input_file):
                     break
                 else:
                     continue
+            if k == len(decoded_frags) - 1:
+                decoded_frags.remove(left_end)
+                decoded_frags.remove(right_end)
     return decoded_frags
 
 
