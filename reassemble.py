@@ -64,13 +64,13 @@ def assemble_frags(input_file):
                 break
             temp_decoded_frags = decoded_frags.copy()
             temp_decoded_frags_anchors = decoded_frags.copy()
-            left_anchor, right_anchor = get_anchors(temp_decoded_frags_anchors.copy())
+            left_anchor, right_anchor = get_anchors(temp_decoded_frags_anchors.copy())    ### !!! can we use global variables for left and right anchor
             if left_anchor is not None:
                 temp_decoded_frags_anchors.remove(left_anchor)
                 left_anchor_match_info = check_matches(temp_decoded_frags_anchors, left_anchor)
                 if left_anchor_match_info["num_of_right_matches"] == 1:
-                    left_splice_frag = left_anchor_match_info["right_matches"][0]['spliced_frag']
-                    left_frag = left_anchor_match_info["right_matches"][0]['frag']
+                    left_splice_frag = left_anchor_match_info["right_matches"][0]['spliced_frag']       ### !!!! i would change this to right_splice_frag
+                    left_frag = left_anchor_match_info["right_matches"][0]['frag']                      ### !!!! i would change this to right_frag
                     decoded_frags.remove(left_anchor)
                     combine_frags = left_anchor + left_splice_frag
                     decoded_frags.remove(left_frag)
@@ -80,10 +80,10 @@ def assemble_frags(input_file):
                             decoded_frags.append(anchor)
                         anchor_bin = list()
                         break
-                    break
+                    break               ### !!!! i think this break will activate with or without entering the if statement above
                 if left_anchor_match_info["num_of_right_matches"] > 1:
                     for anchor_fragment in left_anchor_match_info["right_matches"]:
-                        anchor_frag = anchor_fragment["frag"]
+                        anchor_frag = anchor_fragment["frag"]                           ### !!!! why are we not removing the anchor frag from the temp_decoded_frags it will match with itself
                         anchor_frag_splice = anchor_fragment["spliced_frag"]
                         anchor_match_info = check_matches(temp_decoded_frags, anchor_frag)
                         if anchor_match_info["num_of_left_matches"] == 1:
@@ -99,7 +99,7 @@ def assemble_frags(input_file):
                                         decoded_frags.append(anchor)
                                     anchor_bin = list()
                                     break
-                                break
+                                break                                  ### !!!! will need to add an additional break, which means the next = 1 can be removed
             if right_anchor is not None and next == 0:
                 temp_decoded_frags_anchors = decoded_frags.copy()
                 temp_decoded_frags_anchors.remove(right_anchor)
@@ -119,7 +119,7 @@ def assemble_frags(input_file):
                     break
                 if right_anchor_match_info["num_of_left_matches"] > 1:
                     for anchor_fragment in right_anchor_match_info["left_matches"]:
-                        anchor_frag = anchor_fragment["frag"]
+                        anchor_frag = anchor_fragment["frag"]                       ### !!!! why are we not removing the anchor frag from the temp_decoded_frags it will match with itself
                         anchor_frag_splice = anchor_fragment["spliced_frag"]
                         anchor_match_info = check_matches(temp_decoded_frags, anchor_frag)
                         if anchor_match_info["num_of_right_matches"] == 1:
@@ -135,7 +135,7 @@ def assemble_frags(input_file):
                                         decoded_frags.append(anchor)
                                     anchor_bin = list()
                                     break
-                                break
+                                break                               ### !!!! will need to add an additional break, which means the next = 1 can be removed
             # find how each fragment in the temp list matches to the anchor frag
             if next != 1:
                 anchor_frag = temp_decoded_frags.pop(k)
@@ -168,10 +168,10 @@ def assemble_frags(input_file):
                         right_compatible = True
                         right_splice_frag = anchor_match_info["right_matches"][0]['spliced_frag']
                         decoded_frags.remove(anchor_right_frag)
-                        decoded_frags.remove(anchor_left_frag)
+                        decoded_frags.remove(anchor_left_frag)           ### !!!! this should be in the above if statment in case we only get one side that is perfectly compatible
                         combine_frags = combine_frags + right_splice_frag
                     # make sure one of the matches was compatible to replace anchor_frag with combine_frags
-                    if left_compatible and right_compatible:
+                    if left_compatible and right_compatible:       ### !!!! should this be an "or" condition? because if we have a perfect match on either side of the anchor then we will need to replace the anchor frag with the combine_frags
                         decoded_frags.remove(anchor_frag)
                         decoded_frags.append(combine_frags)
                         if len(anchor_bin) != 0:
@@ -185,7 +185,7 @@ def assemble_frags(input_file):
                                 decoded_frags.remove(left_end)
                                 anchor_bin.append(left_end)
                             except ValueError:
-                                decoded_frags.remove(right_end)
+                                decoded_frags.remove(right_end)  ### !!!! what happens if we cannot remove?
                                 anchor_bin.append(right_end)
                             # finally:
                             #     decoded_frags.append(left_end)
@@ -207,7 +207,7 @@ def assemble_frags(input_file):
                         decoded_frags.remove(anchor_left_frag)
                         combine_frags = left_splice_frag + combine_frags
                     # make sure the left match was compatible to replace anchor_frag with combine_frags
-                    if left_compatible:
+                    if left_compatible:                 ### !!! we should be able to combine this if statment with the one above and get rid of the boolean checks
                         decoded_frags.remove(anchor_frag)
                         decoded_frags.append(combine_frags)
                         if len(anchor_bin) != 0:
@@ -224,7 +224,7 @@ def assemble_frags(input_file):
                                 decoded_frags.remove(left_end)
                                 anchor_bin.append(left_end)
                             except ValueError:
-                                decoded_frags.remove(right_end)
+                                decoded_frags.remove(right_end)         ### !!!! what happens if we cannot remove?
                                 anchor_bin.append(right_end)
                             # finally:
                             #     decoded_frags.append(left_end)
@@ -246,7 +246,7 @@ def assemble_frags(input_file):
                         decoded_frags.remove(anchor_right_frag)
                         combine_frags = combine_frags + right_splice_frag
                     # make sure the right match was compatible to replace anchor_frag with combine_frags
-                    if right_compatible:
+                    if right_compatible:                    ### !!! we should be able to combine this if statment with the one above and get rid of the boolean checks
                         decoded_frags.remove(anchor_frag)
                         decoded_frags.append(combine_frags)
                         if len(anchor_bin) != 0:
@@ -260,7 +260,7 @@ def assemble_frags(input_file):
                                 decoded_frags.remove(left_end)
                                 anchor_bin.append(left_end)
                             except ValueError:
-                                decoded_frags.remove(right_end)
+                                decoded_frags.remove(right_end)             ### !!!! what happens if we cannot remove?
                                 anchor_bin.append(right_end)
                             break
                         # continue
