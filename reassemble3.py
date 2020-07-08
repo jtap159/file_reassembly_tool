@@ -29,14 +29,17 @@ def verify_matches(matching_info, list_of_fragments, anchor_fragment):
     :param anchor_fragment: [str] the anchor fragment string that need a match verification
     :return: verified_match: [dict] the fragment information that is perfectly compatible
     """
-    for info in matching_info:
-        temp_anchor_frag = info["frag"]
-        list_of_fragments.remove(temp_anchor_frag)
-        compatible_info = find_matches(list_of_fragments, temp_anchor_frag)
-        if compatible_info["num_of_right_matches"] == 1 and compatible_info['right_matches'][0]['frag'] == anchor_fragment:
-            return info
-        elif compatible_info["num_of_left_matches"] == 1 and compatible_info['left_matches'][0]['frag'] == anchor_fragment:
-            return info
+    if len(matching_info) != 0:
+        for info in matching_info:
+            temp_anchor_frag = info["frag"]
+            list_of_fragments.remove(temp_anchor_frag)
+            compatible_info = find_matches(list_of_fragments, temp_anchor_frag)
+            if compatible_info["num_of_right_matches"] == 1 and compatible_info['right_matches'][0]['frag'] == anchor_fragment:
+                return info
+            elif compatible_info["num_of_left_matches"] == 1 and compatible_info['left_matches'][0]['frag'] == anchor_fragment:
+                return info
+            else:
+                return None
         else:
             return None
 
@@ -49,43 +52,20 @@ def assemble_frags(input_file):
             temp_decoded_frags = decoded_frags.copy()
             anchor_frag = temp_decoded_frags.pop(k)  # check the last element of the frag list for matches
             anchor_match_info = find_matches(temp_decoded_frags, anchor_frag)
-            if anchor_match_info["num_of_left_matches"] >= 1 and anchor_match_info["num_of_right_matches"] >= 1:
-                combine_frags = anchor_frag
-                verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), anchor_frag)
-                verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), anchor_frag)
-                if verified_left_match is not None:
-                    combine_frags = verified_left_match['spliced_frag'] + combine_frags
-                    decoded_frags.remove(verified_left_match['frag'])
-                if verified_right_match is not None:
-                    combine_frags = combine_frags + verified_right_match['spliced_frag']
-                    decoded_frags.remove(verified_right_match['frag'])
-                # make sure one of the matches was compatible to replace anchor_frag with combine_frags
-                if combine_frags != anchor_frag:
-                    decoded_frags.remove(anchor_frag)
-                    decoded_frags.append(combine_frags)
-                    break
-            elif anchor_match_info["num_of_left_matches"] >= 1 and anchor_match_info["num_of_right_matches"] == 0:
-                combine_frags = anchor_frag
-                verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), anchor_frag)
-                if verified_left_match is not None:
-                    combine_frags = verified_left_match['spliced_frag'] + combine_frags
-                    decoded_frags.remove(verified_left_match['frag'])
-                # make sure one of the matches was compatible to replace anchor_frag with combine_frags
-                if combine_frags != anchor_frag:
-                    decoded_frags.remove(anchor_frag)
-                    decoded_frags.append(combine_frags)
-                    break
-            elif anchor_match_info["num_of_right_matches"] >= 1 and anchor_match_info["num_of_left_matches"] == 0:
-                combine_frags = anchor_frag
-                verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), anchor_frag)
-                if verified_right_match is not None:
-                    combine_frags = combine_frags + verified_right_match['spliced_frag']
-                    decoded_frags.remove(verified_right_match['frag'])
-                # make sure one of the matches was compatible to replace anchor_frag with combine_frags
-                if combine_frags != anchor_frag:
-                    decoded_frags.remove(anchor_frag)
-                    decoded_frags.append(combine_frags)
-                    break
+            combine_frags = anchor_frag
+            verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), anchor_frag)
+            verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), anchor_frag)
+            if verified_left_match is not None:
+                combine_frags = verified_left_match['spliced_frag'] + combine_frags
+                decoded_frags.remove(verified_left_match['frag'])
+            if verified_right_match is not None:
+                combine_frags = combine_frags + verified_right_match['spliced_frag']
+                decoded_frags.remove(verified_right_match['frag'])
+            # make sure one of the matches was compatible to replace anchor_frag with combine_frags
+            if combine_frags != anchor_frag:
+                decoded_frags.remove(anchor_frag)
+                decoded_frags.append(combine_frags)
+                break
     return decoded_frags
 
 
