@@ -38,13 +38,15 @@ shake_frags = ["The+quality+of+mercy+is+not+strain'd,\nIt+droppeth+as+the+gentle
                "mercy.+I+have+spoke+thus+much\nTo+mitigate+the+justice+of+thy+plea;\nWhich+if+thou+follow,+this+"
                "strict+court+of+Venice\nMust+needs+give+sentence+'gainst+the+merchant+there."]
 
+hello_ordered_frags[0] = hello_ordered_frags[0].replace("+", " ")
+hello_frags[0] = hello_frags[0].replace("+", " ")
+ipsumlorem_short_frags[0] = ipsumlorem_short_frags[0].replace("+", " ")
+shake_frags[0] = shake_frags[0].replace("+", " ")
+
 
 def test_assemble_frags():
     file = open("frag_files/hello-ordered-frags.txt", "r")
     assert reassemble.assemble_frags(file) == hello_ordered_frags
-    file.close()
-    file = open("frag_files/hello-frags.txt", "r")
-    assert reassemble.assemble_frags(file) == hello_frags
     file.close()
     file = open("frag_files/hello-frags.txt", "r")
     assert reassemble.assemble_frags(file) == hello_frags

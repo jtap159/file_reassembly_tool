@@ -74,17 +74,17 @@ def verify_matches(matching_info, list_of_fragments, anchor_fragment, fixed_leng
         return None
 
 
-def assemble_frags(input_file):
+def assemble_frags(decoded_frags):
     """
     Description:
     reassemble the overlapping fragmented source text
     :param input_file: file object to the fragment txt file
     :return: decoded_frags: [list[str]] the reassembled source text as a string
     """
-    decoded_frags = [unquote_plus(line[:-1]) for line in input_file]
     decoded_frags_lengths = [len(frag) for frag in decoded_frags]
     fixed_substring_len = Counter(decoded_frags_lengths).most_common(1)[0][0]
     first_assemble = True
+    no_matches = []
     while first_assemble:
         num_of_fragments = len(decoded_frags)
         for k in range(0, num_of_fragments):
@@ -96,6 +96,8 @@ def assemble_frags(input_file):
             # that only one right side is found and it is the anchor frag
             verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=False, verify_right=True)
             verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=True, verify_right=False)
+            if verified_left_match is None and verified_right_match is None:
+                no_matches.append(anchor_match_info)
             if verified_left_match is not None and verified_right_match is not None:
                 # if the same fragment matches on the left and right of the anchor and it is verified on both sides
                 # then move to the next fragment
@@ -114,6 +116,7 @@ def assemble_frags(input_file):
                 break
             elif k == num_of_fragments - 1:
                 print("No more perfect matches can be found")
+                return no_matches
                 first_assemble = False
         if len(decoded_frags) == 1:
             print("Assembly Finished!")
@@ -123,6 +126,20 @@ def assemble_frags(input_file):
 
 if __name__ == "__main__":
     file = open("frag_files/chopfile-frags.txt", "r")
-    assemble_fragments = assemble_frags(file)
+    sample_fragments = ['        start =',
+                        '   start = star',
+                        '    sourceText ',
+                        'sourceText)\n   ',
+                        'eText = ""\nwith open(sys.argv[1], \'r\') as f:\n    s',
+                        'eText += f.read()\n    srcLen = len(sourceTe',
+                        '     offset = random.randint(5, 11)\n      ',
+                        't = start+offset\n    random.shuffle(frags)\n    print "\\n".join(frags)\n',
+                        '     frags.append(urllib.quote_plus(sourceText[start:start+fragLen]))\n        last = st',
+                        '#!/usr/bin/env python\n#\n# Chop up the input text into 15 character substrings with overlap\nimport random\nimport urllib\nimport sys\n\nsourceText',
+                        '\n    start = 0\n    fragLen = 0\n    last = 0\n    frags = []\n    while last < srcLen:\n        frag',
+                        '      fragLen = 15\n       ',
+                        't = start + fragLen - 1\n        ']
+    sample_fragments = [frag.replace(" ", "@") for frag in sample_fragments]
+    assemble_fragments = assemble_frags(sample_fragments)
     print(assemble_fragments[0])
     file.close()
