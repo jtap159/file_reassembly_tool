@@ -1,5 +1,6 @@
 from urllib.parse import unquote_plus, unquote
 from collections import Counter
+import numpy as np
 
 
 def find_matches(list_of_fragments, anchor_fragment, fixed_length
@@ -75,12 +76,6 @@ def verify_matches(matching_info, list_of_fragments, anchor_fragment, fixed_leng
 
 
 def assemble_frags(decoded_frags):
-    """
-    Description:
-    reassemble the overlapping fragmented source text
-    :param input_file: file object to the fragment txt file
-    :return: decoded_frags: [list[str]] the reassembled source text as a string
-    """
     decoded_frags_lengths = [len(frag) for frag in decoded_frags]
     fixed_substring_len = Counter(decoded_frags_lengths).most_common(1)[0][0]
     first_assemble = True
@@ -124,6 +119,37 @@ def assemble_frags(decoded_frags):
     return decoded_frags
 
 
+def find_left_anchor_index(fragment_info, fragments):
+    for info in fragment_info:
+        if len(info['left_matches']) == 0:
+            return fragments.index(info['anchor'])
+
+
+def create_matching_matrix(fragment_info, fragments):
+    # building to the right, so use the right matches of each fragment info
+    # rows are building to the right
+    # columns are building to the left
+    matching_matrix = np.zeros((len(fragments), len(fragments)), dtype=np.int32)
+    for info in fragment_info:
+        row_index = fragments.index(info['anchor'])
+        column_indexes = [fragments.index(right_match['frag']) for right_match in info['right_matches']]
+        for column_index in column_indexes:
+            matching_matrix[row_index][column_index] = 1
+    return matching_matrix
+
+
+def find_best_combination(matching_matrix, left_anchor_index):
+    tracker_matrix = np.ones((1, len(matching_matrix)), dtype=np.int32)
+    # use the left anchor as the starting point (first slot)
+    tracker_matrix[0][left_anchor_index] = 0
+    # now find all the possible matches to the right of the left anchor
+    right_matching_bin = matching_matrix[left_anchor_index, :] * tracker_matrix[0]
+    right_matching_indices = np.where(right_matching_bin == 1)[0]
+    complete = False
+    while complete:
+        pass
+
+
 if __name__ == "__main__":
     file = open("frag_files/chopfile-frags.txt", "r")
     sample_fragments = ['        start =',
@@ -140,6 +166,9 @@ if __name__ == "__main__":
                         '      fragLen = 15\n       ',
                         't = start + fragLen - 1\n        ']
     sample_fragments = [frag.replace(" ", "@") for frag in sample_fragments]
-    assemble_fragments = assemble_frags(sample_fragments)
-    print(assemble_fragments[0])
+    assemble_fragments_info = assemble_frags(sample_fragments)
     file.close()
+    matrix = create_matching_matrix(assemble_fragments_info, sample_fragments)
+    left_end_index = find_left_anchor_index(assemble_fragments_info, sample_fragments)
+    best_match_indexes = find_best_combination(matrix, left_end_index)
+
