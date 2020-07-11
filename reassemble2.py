@@ -145,9 +145,14 @@ def find_best_combination(matching_matrix, left_anchor_index):
     # now find all the possible matches to the right of the left anchor
     right_matching_bin = matching_matrix[left_anchor_index, :] * tracker_matrix[0]
     right_matching_indices = np.where(right_matching_bin == 1)[0]
-    complete = False
-    while complete:
-        pass
+    run = True
+    while run:
+        tracker_array = tracker_matrix[0]
+        for i in right_matching_indices:
+            tracker_array[i] = 0
+            right_matching_bin = matching_matrix[i, :] * tracker_array
+            right_matching_indices = np.where(right_matching_bin == 1)[0]
+            print('hello')
 
 
 if __name__ == "__main__":
