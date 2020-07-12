@@ -139,17 +139,19 @@ def create_matching_matrix(fragment_info, fragments):
 
 
 def find_best_combination(matching_matrix, left_anchor_index):
-    tracker_matrix = np.ones((1, len(matching_matrix)), dtype=np.int32)
+    tracker_matrix = np.array([[]], dtype=np.int32)
     # use the left anchor as the starting point (first slot)
-    tracker_matrix[0][left_anchor_index] = 0
+    tracker_array = np.ones((1, len(matching_matrix)), dtype=np.int32)
+    tracker_array[0][left_anchor_index] = 0
+    tracker_matrix = np.hstack((tracker_matrix, tracker_array))
     # now find all the possible matches to the right of the left anchor
     right_matching_bin = matching_matrix[left_anchor_index, :] * tracker_matrix[0]
     right_matching_indices = np.where(right_matching_bin == 1)[0]
     run = True
     while run:
-        tracker_array = tracker_matrix[0]
         for i in right_matching_indices:
-            tracker_array[i] = 0
+            tracker_array[0][i] = 0
+            tracker_matrix = np.append(tracker_matrix, tracker_array, axis=0)
             right_matching_bin = matching_matrix[i, :] * tracker_array
             right_matching_indices = np.where(right_matching_bin == 1)[0]
             print('hello')
