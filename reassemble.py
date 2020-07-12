@@ -204,13 +204,58 @@ def assemble_permutations(permutations, fragments, fixed_length, left_anchor_ind
                     if assembly[-j:] == fragments[i][:j]:  # check for match right of anchor
                         assembly = assembly + fragments[i][j:]
                         break
-            assemblies.append(assembly)
+            validate = validate_parantheses(assembly)
+            if validate:
+                assemblies.append(assembly)
+    all_scores = []
+    for assembly in assemblies:
+        space_scoring = score_spaces(assembly)
+        all_scores.append(space_scoring)
 
-    return assemblies
+    best_score_index = [i for i, value in enumerate(all_scores) if value == 1]
+    final_assemblies = []
+    for k in best_score_index:
+        final_assemblies.append(assemblies[k])
+    return final_assemblies
+
+
+def validate_parantheses(document):
+    # build the sequence of parantheses found in the document
+    list_of_parantheses = ["(", ")", "[", "]", "{", "}"]
+    check_parantheses = ''
+    for character in document:
+        if character in list_of_parantheses:
+            check_parantheses += character
+    stack, pchar = [], {"(": ")", "{": "}", "[": "]"}
+    for parenthese in check_parantheses:
+        if parenthese in pchar:
+            stack.append(parenthese)
+        elif len(stack) == 0 or pchar[stack.pop()] != parenthese:
+            return False
+    return len(stack) == 0
+
+
+def score_spaces(document):
+    # the more positive the score the more spacing issues occurred
+    valid_spacing = [1, 4, 8, 12, 16]
+    count = 0
+    check = []
+    for character in document:
+        if character == " ":
+            count += 1
+        elif count > 0:
+            check.append(count)
+            count = 0
+    score = 0
+    for spacing in check:
+        if spacing not in valid_spacing:
+            min_score = min([abs(i - spacing) for i in valid_spacing])
+            score += min_score
+    return score
 
 
 if __name__ == "__main__":
-    file = open("frag_files/Shake-frags.txt", "r")
+    file = open("frag_files/chopfile-frags.txt", "r")
     # sample_fragments = [frag.replace(" ", "@") for frag in sample_fragments]
     assembled_perms = assemble_frags(file)
     file.close()
