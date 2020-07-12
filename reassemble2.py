@@ -138,23 +138,51 @@ def create_matching_matrix(fragment_info, fragments):
     return matching_matrix
 
 
+def create_tracker_array(frags_used):
+    # create a binary array to track what fragments have been used
+    tracker_array = np.ones(13, dtype=np.int32)
+    for frag_used in frags_used:
+        tracker_array[frags_used] = 0
+    return tracker_array
+
+
 def find_best_combination(matching_matrix, left_anchor_index):
-    tracker_matrix = np.array([[]], dtype=np.int32)
     # use the left anchor as the starting point (first slot)
-    tracker_array = np.ones((1, len(matching_matrix)), dtype=np.int32)
-    tracker_array[0][left_anchor_index] = 0
-    tracker_matrix = np.hstack((tracker_matrix, tracker_array))
+    frags_permutation = [left_end_index]
+    slot_tracker_array = create_tracker_array(frags_permutation)
     # now find all the possible matches to the right of the left anchor
-    right_matching_bin = matching_matrix[left_anchor_index, :] * tracker_matrix[0]
-    right_matching_indices = np.where(right_matching_bin == 1)[0]
-    run = True
-    while run:
-        for i in right_matching_indices:
-            tracker_array[0][i] = 0
-            tracker_matrix = np.append(tracker_matrix, tracker_array, axis=0)
-            right_matching_bin = matching_matrix[i, :] * tracker_array
-            right_matching_indices = np.where(right_matching_bin == 1)[0]
-            print('hello')
+    right_matching_bin = matching_matrix[left_anchor_index, :] * slot_tracker_array
+    right_matching_indices = np.where(right_matching_bin == 1)[0].tolist()
+    # create an empty list of lists for tacking the right matches
+    right_matching_tracker = [[] for i in range(0, len(matching_matrix))]
+    right_matching_tracker[0] = right_matching_indices
+
+    permutations = []
+    rm_index = 0  # right match index
+    select_index = 0  # select the fragment to use from the right matches
+    add_matches_index = 1  # add the right matches to the right match tracker
+    while len(right_matching_tracker[rm_index]) != 0:
+        select_frag = right_matching_tracker[rm_index][select_index]
+        frags_permutation.append(select_frag)
+        slot_tracker_array = create_tracker_array(frags_permutation)
+        right_matching_bin = matching_matrix[select_frag, :] * slot_tracker_array
+        right_matching_indices = np.where(right_matching_bin == 1)[0].tolist()
+        if len(right_matching_indices) == 0:
+            permutations.append(frags_permutation.copy())
+            print("permutation found")
+            frags_permutation.pop()  # go back one slot
+            del right_matching_tracker[rm_index][select_index]
+            while len(right_matching_tracker[rm_index]) == 0:
+                rm_index -= 1
+                add_matches_index -= 1
+                frags_permutation.pop()
+                del right_matching_tracker[rm_index][select_index]
+            continue
+        right_matching_tracker[add_matches_index] = right_matching_indices
+        # pick fragment from the right matching indices
+        rm_index += 1
+        add_matches_index += 1
+    return permutations
 
 
 if __name__ == "__main__":
@@ -177,5 +205,5 @@ if __name__ == "__main__":
     file.close()
     matrix = create_matching_matrix(assemble_fragments_info, sample_fragments)
     left_end_index = find_left_anchor_index(assemble_fragments_info, sample_fragments)
-    best_match_indexes = find_best_combination(matrix, left_end_index)
+    perm = find_best_combination(matrix, left_end_index)
 
