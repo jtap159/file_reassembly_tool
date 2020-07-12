@@ -169,7 +169,6 @@ def find_best_combination(matching_matrix, left_anchor_index):
         right_matching_indices = np.where(right_matching_bin == 1)[0].tolist()
         if len(right_matching_indices) == 0:
             permutations.append(frags_permutation.copy())
-            print("permutation found")
             frags_permutation.pop()  # go back one slot
             del right_matching_tracker[rm_index][select_index]
             while len(right_matching_tracker[rm_index]) == 0:
@@ -187,6 +186,26 @@ def find_best_combination(matching_matrix, left_anchor_index):
     return permutations
 
 
+def assemble_permutations(permutations, fragments, fixed_length, left_anchor_index):
+    # all the fragments should be greater than or equal to the fixed length at this point
+    max_overlap = fixed_length - 1
+    complete_fragment_size = len(fragments)
+    # from the permutations we use the left anchor as the starting point every time assuming we found the left anchor
+    assemblies = []
+    for permutation in permutations:
+        if len(permutation) == complete_fragment_size:
+            assembly = fragments[left_anchor_index]
+            del permutation[0]
+            for i in permutation:
+                for j in range(max_overlap, 2, -1):
+                    if assembly[-j:] == fragments[i][:j]:  # check for match right of anchor
+                        assembly = assembly + fragments[i][j:]
+                        break
+            assemblies.append(assembly)
+
+    return assemblies
+
+
 if __name__ == "__main__":
     file = open("frag_files/chopfile-frags.txt", "r")
     sample_fragments = ['        start =',
@@ -202,10 +221,11 @@ if __name__ == "__main__":
                         '\n    start = 0\n    fragLen = 0\n    last = 0\n    frags = []\n    while last < srcLen:\n        frag',
                         '      fragLen = 15\n       ',
                         't = start + fragLen - 1\n        ']
-    sample_fragments = [frag.replace(" ", "@") for frag in sample_fragments]
+    # sample_fragments = [frag.replace(" ", "@") for frag in sample_fragments]
     assemble_fragments_info = assemble_frags(sample_fragments)
     file.close()
     matrix = create_matching_matrix(assemble_fragments_info, sample_fragments)
     left_end_index = find_left_anchor_index(assemble_fragments_info, sample_fragments)
     perm = find_best_combination(matrix, left_end_index)
+    assembled_permutations = assemble_permutations(perm, sample_fragments, 15, left_end_index)
 
