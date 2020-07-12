@@ -41,7 +41,6 @@ def find_matches(list_of_fragments, anchor_fragment, fixed_length
                     duplicate_count += 1
                     break
         if duplicate_count == 2:
-            print(f"duplicate found on anchor: {[anchor_fragment]}")
             info["duplicate"] = True
 
     return info
@@ -75,12 +74,13 @@ def verify_matches(matching_info, list_of_fragments, anchor_fragment, fixed_leng
         return None
 
 
-def assemble_frags(decoded_frags):
+def assemble_frags(input_file):
+    decoded_frags = [unquote_plus(line[:-1]) for line in input_file]
     decoded_frags_lengths = [len(frag) for frag in decoded_frags]
     fixed_substring_len = Counter(decoded_frags_lengths).most_common(1)[0][0]
     first_assemble = True
-    no_matches = []
     while first_assemble:
+        no_matches_info = []
         num_of_fragments = len(decoded_frags)
         for k in range(0, num_of_fragments):
             temp_decoded_frags = decoded_frags.copy()
@@ -92,7 +92,7 @@ def assemble_frags(decoded_frags):
             verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=False, verify_right=True)
             verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=True, verify_right=False)
             if verified_left_match is None and verified_right_match is None:
-                no_matches.append(anchor_match_info)
+                no_matches_info.append(anchor_match_info)
             if verified_left_match is not None and verified_right_match is not None:
                 # if the same fragment matches on the left and right of the anchor and it is verified on both sides
                 # then move to the next fragment
@@ -110,9 +110,9 @@ def assemble_frags(decoded_frags):
                 decoded_frags.append(combine_frags)
                 break
             elif k == num_of_fragments - 1:
-                print("No more perfect matches can be found")
-                return no_matches
-                first_assemble = False
+                print("No more perfect matches can be found...checking permutations")
+                assembled_permutations = find_best_combination(no_matches_info, decoded_frags, fixed_substring_len)
+                return assembled_permutations
         if len(decoded_frags) == 1:
             print("Assembly Finished!")
             first_assemble = False
@@ -146,9 +146,11 @@ def create_tracker_array(frags_used):
     return tracker_array
 
 
-def find_best_combination(matching_matrix, left_anchor_index):
+def find_best_combination(fragments_info, fragments, fixed_len):
+    matching_matrix = create_matching_matrix(fragments_info, fragments)
+    left_anchor_index = find_left_anchor_index(fragments_info, fragments)
     # use the left anchor as the starting point (first slot)
-    frags_permutation = [left_end_index]
+    frags_permutation = [left_anchor_index]
     slot_tracker_array = create_tracker_array(frags_permutation)
     # now find all the possible matches to the right of the left anchor
     right_matching_bin = matching_matrix[left_anchor_index, :] * slot_tracker_array
@@ -157,36 +159,37 @@ def find_best_combination(matching_matrix, left_anchor_index):
     right_matching_tracker = [[] for i in range(0, len(matching_matrix))]
     right_matching_tracker[0] = right_matching_indices
 
-    permutations = []
+    possible_permutations = []
     rm_index = 0  # right match index
-    select_index = 0  # select the fragment to use from the right matches
     add_matches_index = 1  # add the right matches to the right match tracker
     while len(right_matching_tracker[rm_index]) != 0 and rm_index >= 0:
-        select_frag = right_matching_tracker[rm_index][select_index]
+        select_frag = right_matching_tracker[rm_index][0]
         frags_permutation.append(select_frag)
         slot_tracker_array = create_tracker_array(frags_permutation)
         right_matching_bin = matching_matrix[select_frag, :] * slot_tracker_array
         right_matching_indices = np.where(right_matching_bin == 1)[0].tolist()
         if len(right_matching_indices) == 0:
-            permutations.append(frags_permutation.copy())
+            possible_permutations.append(frags_permutation.copy())
             frags_permutation.pop()  # go back one slot
-            del right_matching_tracker[rm_index][select_index]
+            del right_matching_tracker[rm_index][0]
             while len(right_matching_tracker[rm_index]) == 0:
                 rm_index -= 1
                 add_matches_index -= 1
                 frags_permutation.pop()
                 if rm_index < 0:
                     break
-                del right_matching_tracker[rm_index][select_index]
+                del right_matching_tracker[rm_index][0]
             continue
         right_matching_tracker[add_matches_index] = right_matching_indices
         # pick fragment from the right matching indices
         rm_index += 1
         add_matches_index += 1
-    return permutations
+    assembled_permutations = assemble_permutations(possible_permutations, fragments, fixed_len, left_anchor_index)
+    return assembled_permutations
 
 
 def assemble_permutations(permutations, fragments, fixed_length, left_anchor_index):
+    # need to add parenthesis check and tab auto-correct
     # all the fragments should be greater than or equal to the fixed length at this point
     max_overlap = fixed_length - 1
     complete_fragment_size = len(fragments)
@@ -207,25 +210,9 @@ def assemble_permutations(permutations, fragments, fixed_length, left_anchor_ind
 
 
 if __name__ == "__main__":
-    file = open("frag_files/chopfile-frags.txt", "r")
-    sample_fragments = ['        start =',
-                        '   start = star',
-                        '    sourceText ',
-                        'sourceText)\n   ',
-                        'eText = ""\nwith open(sys.argv[1], \'r\') as f:\n    s',
-                        'eText += f.read()\n    srcLen = len(sourceTe',
-                        '     offset = random.randint(5, 11)\n      ',
-                        't = start+offset\n    random.shuffle(frags)\n    print "\\n".join(frags)\n',
-                        '     frags.append(urllib.quote_plus(sourceText[start:start+fragLen]))\n        last = st',
-                        '#!/usr/bin/env python\n#\n# Chop up the input text into 15 character substrings with overlap\nimport random\nimport urllib\nimport sys\n\nsourceText',
-                        '\n    start = 0\n    fragLen = 0\n    last = 0\n    frags = []\n    while last < srcLen:\n        frag',
-                        '      fragLen = 15\n       ',
-                        't = start + fragLen - 1\n        ']
+    file = open("frag_files/chopfile-frags.tx", "r")
     # sample_fragments = [frag.replace(" ", "@") for frag in sample_fragments]
-    assemble_fragments_info = assemble_frags(sample_fragments)
+    assembled_perms = assemble_frags(file)
     file.close()
-    matrix = create_matching_matrix(assemble_fragments_info, sample_fragments)
-    left_end_index = find_left_anchor_index(assemble_fragments_info, sample_fragments)
-    perm = find_best_combination(matrix, left_end_index)
-    assembled_permutations = assemble_permutations(perm, sample_fragments, 15, left_end_index)
+
 
