@@ -161,7 +161,7 @@ def find_best_combination(matching_matrix, left_anchor_index):
     rm_index = 0  # right match index
     select_index = 0  # select the fragment to use from the right matches
     add_matches_index = 1  # add the right matches to the right match tracker
-    while len(right_matching_tracker[rm_index]) != 0:
+    while len(right_matching_tracker[rm_index]) != 0 and rm_index >= 0:
         select_frag = right_matching_tracker[rm_index][select_index]
         frags_permutation.append(select_frag)
         slot_tracker_array = create_tracker_array(frags_permutation)
@@ -176,6 +176,8 @@ def find_best_combination(matching_matrix, left_anchor_index):
                 rm_index -= 1
                 add_matches_index -= 1
                 frags_permutation.pop()
+                if rm_index < 0:
+                    break
                 del right_matching_tracker[rm_index][select_index]
             continue
         right_matching_tracker[add_matches_index] = right_matching_indices
