@@ -1,5 +1,7 @@
 import flask
 from flask import request, jsonify
+import json
+from reassemble_task2 import assemble_frags
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
@@ -12,10 +14,13 @@ def home():
 
 @app.route('/reassemble_frags', methods=['POST'])
 def reassemble_frags():
+    # frags = request.args['fragments']
     frags = request.args['fragments']
-    print(type(frags))
-    return frags
+    frags = frags.split(",,, ")
+    assembled_fragments = assemble_frags(frags)
+    return assembled_fragments
 
 
 if __name__ == "__main__":
     app.run()
+

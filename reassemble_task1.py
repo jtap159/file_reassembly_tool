@@ -255,7 +255,7 @@ def score_spaces(document):
 
 
 if __name__ == "__main__":
-    file = open("frag_files/chopfile-frags.txt", "r")
+    file = open("frag_files/hello-ordered-frags.txt", "r")
     assembled_perms = assemble_frags(file)
     file.close()
 
