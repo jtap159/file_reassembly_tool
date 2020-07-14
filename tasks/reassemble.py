@@ -1,4 +1,3 @@
-from urllib.parse import unquote_plus, unquote
 from collections import Counter
 import numpy as np
 
@@ -72,51 +71,6 @@ def verify_matches(matching_info, list_of_fragments, anchor_fragment, fixed_leng
                 return info
     else:
         return None
-
-
-def assemble_frags(input_file):
-    decoded_frags = [unquote_plus(line[:-1]) for line in input_file]
-    decoded_frags_lengths = [len(frag) for frag in decoded_frags]
-    fixed_substring_len = Counter(decoded_frags_lengths).most_common(1)[0][0]
-    first_assemble = True
-    while first_assemble:
-        no_matches_info = []
-        num_of_fragments = len(decoded_frags)
-        for k in range(0, num_of_fragments):
-            temp_decoded_frags = decoded_frags.copy()
-            main_anchor_frag = temp_decoded_frags.pop(k)
-            anchor_match_info = find_matches(temp_decoded_frags, main_anchor_frag, fixed_substring_len)
-            combine_frags = main_anchor_frag
-            # verify if any matches are perfectly compatible i.e. verify the right side of the left matches to check
-            # that only one right side is found and it is the anchor frag
-            verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=False, verify_right=True)
-            verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=True, verify_right=False)
-            if verified_left_match is None and verified_right_match is None:
-                no_matches_info.append(anchor_match_info)
-            if verified_left_match is not None and verified_right_match is not None:
-                # if the same fragment matches on the left and right of the anchor and it is verified on both sides
-                # then move to the next fragment
-                if verified_left_match['frag'] == verified_right_match['frag']:
-                    continue
-            if verified_left_match is not None:
-                combine_frags = verified_left_match['spliced_frag'] + combine_frags
-                decoded_frags.remove(verified_left_match['frag'])
-            if verified_right_match is not None:
-                combine_frags = combine_frags + verified_right_match['spliced_frag']
-                decoded_frags.remove(verified_right_match['frag'])
-            # make sure one of the matches was compatible to replace main_anchor_frag with combine_frags
-            if combine_frags != main_anchor_frag:
-                decoded_frags.remove(main_anchor_frag)
-                decoded_frags.append(combine_frags)
-                break
-            elif k == num_of_fragments - 1:
-                print("No more perfect matches can be found...checking permutations")
-                assembled_permutations = find_best_combination(no_matches_info, decoded_frags, fixed_substring_len)
-                return assembled_permutations
-        if len(decoded_frags) == 1:
-            print("Assembly Finished!")
-            first_assemble = False
-    return decoded_frags
 
 
 def find_left_anchor_index(fragment_info, fragments):
@@ -254,9 +208,54 @@ def score_spaces(document):
     return score
 
 
-if __name__ == "__main__":
-    file = open("frag_files/hello-ordered-frags.txt", "r")
-    assembled_perms = assemble_frags(file)
-    file.close()
+def assemble_frags(decoded_frags):
+    decoded_frags_lengths = [len(frag) for frag in decoded_frags]
+    fixed_substring_len = Counter(decoded_frags_lengths).most_common(1)[0][0]
+    first_assemble = True
+    while first_assemble:
+        no_matches_info = []
+        num_of_fragments = len(decoded_frags)
+        for k in range(0, num_of_fragments):
+            temp_decoded_frags = decoded_frags.copy()
+            main_anchor_frag = temp_decoded_frags.pop(k)
+            anchor_match_info = find_matches(temp_decoded_frags, main_anchor_frag, fixed_substring_len)
+            combine_frags = main_anchor_frag
+            # verify if any matches are perfectly compatible i.e. verify the right side of the left matches to check
+            # that only one right side is found and it is the anchor frag
+            verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=False, verify_right=True)
+            verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=True, verify_right=False)
+            if verified_left_match is None and verified_right_match is None:
+                no_matches_info.append(anchor_match_info)
+            if verified_left_match is not None and verified_right_match is not None:
+                # if the same fragment matches on the left and right of the anchor and it is verified on both sides
+                # then move to the next fragment
+                if verified_left_match['frag'] == verified_right_match['frag']:
+                    continue
+            if verified_left_match is not None:
+                combine_frags = verified_left_match['spliced_frag'] + combine_frags
+                decoded_frags.remove(verified_left_match['frag'])
+            if verified_right_match is not None:
+                combine_frags = combine_frags + verified_right_match['spliced_frag']
+                decoded_frags.remove(verified_right_match['frag'])
+            # make sure one of the matches was compatible to replace main_anchor_frag with combine_frags
+            if combine_frags != main_anchor_frag:
+                decoded_frags.remove(main_anchor_frag)
+                decoded_frags.append(combine_frags)
+                break
+            elif k == num_of_fragments - 1:
+                print("No more perfect matches can be found...checking permutations")
+                assembled_permutations = find_best_combination(no_matches_info, decoded_frags, fixed_substring_len)
+                return assembled_permutations
+        if len(decoded_frags) == 1:
+            first_assemble = False
+    return decoded_frags[0]
 
+
+if __name__ == "__main__":
+    frags = ['// Sample progr', 'program\npublic ', 'ublic class Hel', 'lass HelloWorld', 'elloWorld {\n   ',
+             'd {\n    public ', 'public static v', 'c static void m', 'id main(String[', '(String[] args)',
+             'args) {\n       ', '      // Prints', '// Prints "Hell', 'ts "Hello, Worl', ', World" to the',
+             '" to the termin', 'rminal window.\n', 'ow.\n        Sys', '       System.o', 'stem.out.printl',
+             'intln("Hello, W', 'o, World");\n   ', 'rld");\n    }\n}\n', ';\n    }\n}\n']
+    assembled_perms = assemble_frags(frags)
 

@@ -10,7 +10,7 @@ def frag_delimiter(input_file, output_name):
 
 
 if __name__ == "__main__":
-    file = open("frag_files/Shake-frags.txt", "r")
+    file = open("../frag_files/Shake-frags.txt", "r")
     output = "Shake-frags_delim.txt"
     frag_delimiter(file, output)
     file.close()

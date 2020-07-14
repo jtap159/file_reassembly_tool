@@ -1,7 +1,7 @@
 import flask
 from flask import request, jsonify
 import json
-from reassemble_task2 import assemble_frags
+from tasks.reassemble import assemble_frags
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
