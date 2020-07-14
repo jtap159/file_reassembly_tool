@@ -8,6 +8,7 @@ pytest = "*"
 
 [packages]
 pandas = "*"
+flask = "*"
 
 [requires]
 python_version = "3.7"
