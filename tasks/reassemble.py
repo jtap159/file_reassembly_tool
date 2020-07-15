@@ -6,15 +6,13 @@ def find_matches(list_of_fragments, anchor_fragment, fixed_length
                  , verify_left=True, verify_right=True):
     """
     Description:
-    Using an anchor fragment find the best matches from the list of fragments to the right, left or left&right.
-    -Check how each fragment in the list of fragments fits to the anchor fragment
-    -A text file has been fragmented into a series of fixed length substrings which are guaranteed
-    to overlap by at least 3 characters and they are guaranteed not to be identical.
+    Using an anchor fragment find the best matches from the list of fragments to the right, left or left&right
+    of the anchor fragment.
     :param list_of_fragments: list[[str]] the list of fragment strings with the anchor fragment removed
     :param anchor_fragment: [str] the anchor fragment string that we are using as a reference for matching
     :param fixed_length: [int] is the most common substring length
-    :param verify_left: [boolean] try to find matches to the left of the anchor, defaults to True
-    :param verify_right: [boolean] try to find matches to the right of the anchor, defaults to True
+    :param verify_left: [bool] try to find matches to the left of the anchor, defaults to True
+    :param verify_right: [bool] try to find matches to the right of the anchor, defaults to True
     """
     max_overlap = fixed_length - 1 if len(anchor_fragment) >= fixed_length else len(anchor_fragment)
     info = {"anchor": anchor_fragment,
@@ -27,12 +25,12 @@ def find_matches(list_of_fragments, anchor_fragment, fixed_length
     acceptable_spaces = [4, 8, 12, 16]
     for i, frag in enumerate(list_of_fragments):   # check every fragment to see if they fit to the anchor fragment
         duplicate_count = 0
-        if verify_left:
+        if verify_left:  # check for matches left of the anchor
             for j in range(max_overlap, 2, -1):
                 anchor_overlap = anchor_fragment[:j]
                 left_overlap = frag[-j:]
                 spliced_frag = frag[:-j]
-                if left_overlap == anchor_overlap:  # check for match left of anchor
+                if left_overlap == anchor_overlap:
                     if set(left_overlap) == space_check:  # check if the overlap is only spaces
                         anchor_spaces = 0
                         frag_spaces = 0
@@ -58,12 +56,12 @@ def find_matches(list_of_fragments, anchor_fragment, fixed_length
                     info["left_matches"].append({"frag": frag, "spliced_frag": spliced_frag})
                     duplicate_count += 1
                     break
-        if verify_right:
+        if verify_right:  # check for matches right of the anchor
             for j in range(max_overlap, 2, -1):
                 anchor_overlap = anchor_fragment[-j:]
                 right_overlap = frag[:j]
                 spliced_frag = frag[j:]
-                if anchor_overlap == right_overlap:  # check for match right of anchor
+                if anchor_overlap == right_overlap:
                     if set(right_overlap) == space_check:  # check if the overlap is only spaces
                         anchor_spaces = 0
                         frag_spaces = 0
@@ -79,6 +77,7 @@ def find_matches(list_of_fragments, anchor_fragment, fixed_length
                                 break
                         total_spaces = anchor_spaces + frag_spaces
                         if total_spaces in acceptable_spaces:
+                            # the total spaces need to be a tab worth of spaces i.e. 4, 8, 12 etc..
                             info["num_of_right_matches"] += 1
                             info["right_matches"].append({"frag": frag, "spliced_frag": spliced_frag})
                             duplicate_count += 1
@@ -99,14 +98,14 @@ def verify_matches(matching_info, list_of_fragments, anchor_fragment, fixed_leng
     """
     Description:
     verify that a match is perfectly compatible to the main anchor frag
-    i.e. verify the right side of the left matches to the main anchor frag by guaranteeing
-    that only one right side is found and it is the anchor frag and vise versa for the right matches
-    :param matching_info: [list[dict]] the list of fragment information that matched with the anchor fragment
+    i.e. one of the left matches has only one right side match and it is the main_anchor_frag
+    and vice versa for right matches
+    :param matching_info: [list[dict]] the list of fragment matches found for the anchor fragment
     :param list_of_fragments: [list[str]] the list of fragment strings i.e. decoded_frags.copy()
     :param anchor_fragment: [str] the anchor fragment string that needs a match verification
     :param fixed_length: [int] is the most common substring length
-    :param verify_left: [boolean] if True will try to find matches to the left of the anchor
-    :param verify_right: [boolean] if True will try to find matches to the right of the anchor
+    :param verify_left: [boolean] if True will try to find matches to the left of the reference anchor
+    :param verify_right: [boolean] if True will try to find matches to the right of the reference anchor
     :return: info: [dict] the fragment information that is perfectly compatible or return None
     """
     if len(matching_info) != 0:
@@ -114,19 +113,30 @@ def verify_matches(matching_info, list_of_fragments, anchor_fragment, fixed_leng
             temp_anchor_frag = info["frag"]
             temp_list_of_fragments = list_of_fragments.copy()
             temp_list_of_fragments.remove(temp_anchor_frag)
-            compatible_info = find_matches(temp_list_of_fragments, temp_anchor_frag, fixed_length, verify_left=verify_left, verify_right=verify_right)
-            if verify_right and compatible_info["num_of_right_matches"] == 1 and compatible_info['right_matches'][0]['frag'] == anchor_fragment:
+            compatible_info = find_matches(temp_list_of_fragments, temp_anchor_frag, fixed_length,
+                                           verify_left=verify_left, verify_right=verify_right)
+            if verify_right and compatible_info["num_of_right_matches"] == 1 and \
+                    compatible_info['right_matches'][0]['frag'] == anchor_fragment:
                 return info
-            elif verify_left and compatible_info["num_of_left_matches"] == 1 and compatible_info['left_matches'][0]['frag'] == anchor_fragment:
+            elif verify_left and compatible_info["num_of_left_matches"] == 1 and \
+                    compatible_info['left_matches'][0]['frag'] == anchor_fragment:
                 return info
     else:
         return None
 
 
 def find_left_anchor_index(fragment_info, fragments):
+    """
+    Description:
+    Use the fragment information to find which fragment is the left anchor
+    :param fragment_info: [list[dict]] the list of fragment information
+    :param fragments: [list] the list of fragments being searched
+    :return: left_anchor_index: [int] the index location in the fragment list for the left anchor fragment
+    """
     for info in fragment_info:
         if len(info['left_matches']) == 0:
-            return fragments.index(info['anchor'])
+            left_anchor_index = fragments.index(info['anchor'])
+            return left_anchor_index
 
 
 def create_matching_matrix(fragment_info, fragments):
@@ -233,13 +243,19 @@ def assemble_permutations(permutations, fragments, fixed_length, left_anchor_ind
                                 continue
                         assembly = assembly + frag[j:]
                         break
-            validate = validate_parantheses(assembly)
+            validate = validate_parentheses(assembly)
             if validate:
                 assemblies.append(assembly)
     return assemblies
 
 
-def validate_parantheses(document):
+def validate_parentheses(document):
+    """
+    Description:
+    Used to check if a document has the proper use of parentheses
+    :param document: [str] a document represented as a single string
+    :return: True if document has proper use of parentheses or False if the document does not have proper parentheses
+    """
     # build the sequence of parantheses found in the document
     list_of_parantheses = ["(", ")", "[", "]", "{", "}"]
     check_parantheses = ''
@@ -283,8 +299,12 @@ def assemble_frags(decoded_frags):
             combine_frags = main_anchor_frag
             # verify if any matches are perfectly compatible i.e. that one of the left matches has only
             # one right side match and it is the main_anchor_frag and vice versa for right matches
-            verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=False, verify_right=True)
-            verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=True, verify_right=False)
+            verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(),
+                                                 main_anchor_frag, fixed_substring_len,
+                                                 verify_left=False, verify_right=True)
+            verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(),
+                                                  main_anchor_frag, fixed_substring_len,
+                                                  verify_left=True, verify_right=False)
             if verified_left_match is None and verified_right_match is None:
                 no_matches_info.append(anchor_match_info)
             if verified_left_match is not None and verified_right_match is not None:
@@ -304,6 +324,7 @@ def assemble_frags(decoded_frags):
                 decoded_frags.append(combine_frags)
                 break
             elif k == num_of_fragments - 1:
+                #  if none of the fragments have perfect matches then find all of the remaining permutations
                 assembled_permutations = find_best_combination(no_matches_info, decoded_frags, fixed_substring_len)
                 return assembled_permutations
         if len(decoded_frags) == 1:
@@ -317,8 +338,3 @@ if __name__ == "__main__":
     with open("../frag_files/hello-ordered-frags.txt", 'r') as file:
         fragments = [unquote_plus(line[:-1]) for line in file]
     assembled_fragments = assemble_frags(fragments)
-    # fragments = ['//+Sample+program\npublic+class+HelloWorld+{\n++++public+static+void+main(String[]+args)+{\n+++++++',
-    #              '++++++//+Prints+"Hello,+World"+to+the+terminal+window.\n++++++++System.out.println("Hello,+World");'
-    #              '\n++++}\n}\n']
-    # assembled_fragments = assemble_frags(fragments)
-
