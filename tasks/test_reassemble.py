@@ -2,10 +2,6 @@ from urllib.parse import unquote_plus
 from reassemble import assemble_frags
 
 
-hello_ordered_frags = ['// Sample program\npublic class HelloWorld {\n    public static void main(String[] args) '
-                       '{\n       // Prints "Hello, World" to the terminal window.\n'
-                       '        System.out.println("Hello, World");\n    }\n}\n']
-
 hello_frags = ['// Sample program\npublic class HelloWorld {\n    public static void main(String[] args) {\n        // '
                'Prints "Hello, World" to the terminal window.\n        System.out.println("Hello, World");\n    }\n}\n']
 
@@ -42,7 +38,7 @@ shake_frags = ["The quality of mercy is not strain'd,\nIt droppeth as the gentle
 def test_assemble_frags():
     with open("../frag_files/hello-ordered-frags.txt", 'r') as file:
         fragments = [unquote_plus(line[:-1]) for line in file]
-    assert assemble_frags(fragments) == hello_ordered_frags[0]
+    assert assemble_frags(fragments) == hello_frags[0]
 
     with open("../frag_files/hello-frags.txt", 'r') as file:
         fragments = [unquote_plus(line[:-1]) for line in file]
