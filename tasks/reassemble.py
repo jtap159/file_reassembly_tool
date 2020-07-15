@@ -23,20 +23,70 @@ def find_matches(list_of_fragments, anchor_fragment, fixed_length
             "num_of_right_matches": 0,
             "right_matches": [],
             "duplicate": False}
+    space_check = set(" ")
+    acceptable_spaces = [4, 8, 12, 16]
     for i, frag in enumerate(list_of_fragments):   # check every fragment to see if they fit to the anchor fragment
         duplicate_count = 0
         if verify_left:
             for j in range(max_overlap, 2, -1):
-                if frag[-j:] == anchor_fragment[:j]:  # check for match left of anchor
+                anchor_overlap = anchor_fragment[:j]
+                left_overlap = frag[-j:]
+                spliced_frag = frag[:-j]
+                if left_overlap == anchor_overlap:  # check for match left of anchor
+                    if set(left_overlap) == space_check:  # check if the overlap is only spaces
+                        anchor_spaces = 0
+                        frag_spaces = 0
+                        for k in range(len(spliced_frag)-1, 0, -1):
+                            if spliced_frag[k] == " ":
+                                frag_spaces += 1
+                            else:
+                                break
+                        for k in range(0, len(anchor_fragment)):
+                            if anchor_fragment[k] == " ":
+                                anchor_spaces += 1
+                            else:
+                                break
+                        total_spaces = frag_spaces + anchor_spaces
+                        if total_spaces in acceptable_spaces:
+                            info["num_of_left_matches"] += 1
+                            info["left_matches"].append({"frag": frag, "spliced_frag": spliced_frag})
+                            duplicate_count += 1
+                            break
+                        else:
+                            continue
                     info["num_of_left_matches"] += 1
-                    info["left_matches"].append({"frag": frag, "spliced_frag": frag[:-j]})
+                    info["left_matches"].append({"frag": frag, "spliced_frag": spliced_frag})
                     duplicate_count += 1
                     break
         if verify_right:
             for j in range(max_overlap, 2, -1):
-                if anchor_fragment[-j:] == frag[:j]:  # check for match right of anchor
+                anchor_overlap = anchor_fragment[-j:]
+                right_overlap = frag[:j]
+                spliced_frag = frag[j:]
+                if anchor_overlap == right_overlap:  # check for match right of anchor
+                    if set(right_overlap) == space_check:  # check if the overlap is only spaces
+                        anchor_spaces = 0
+                        frag_spaces = 0
+                        for k in range(len(anchor_fragment)-1, 0, -1):
+                            if anchor_fragment[k] == " ":
+                                anchor_spaces += 1
+                            else:
+                                break
+                        for k in range(0, len(spliced_frag)):
+                            if spliced_frag[k] == " ":
+                                frag_spaces += 1
+                            else:
+                                break
+                        total_spaces = anchor_spaces + frag_spaces
+                        if total_spaces in acceptable_spaces:
+                            info["num_of_right_matches"] += 1
+                            info["right_matches"].append({"frag": frag, "spliced_frag": spliced_frag})
+                            duplicate_count += 1
+                            break
+                        else:
+                            continue
                     info["num_of_right_matches"] += 1
-                    info["right_matches"].append({"frag": frag, "spliced_frag": frag[j:]})
+                    info["right_matches"].append({"frag": frag, "spliced_frag": spliced_frag})
                     duplicate_count += 1
                     break
         if duplicate_count == 2:
@@ -48,11 +98,11 @@ def find_matches(list_of_fragments, anchor_fragment, fixed_length
 def verify_matches(matching_info, list_of_fragments, anchor_fragment, fixed_length, verify_left, verify_right):
     """
     Description:
-    verify that a match is perfectly compatible the main anchor frag
+    verify that a match is perfectly compatible to the main anchor frag
     i.e. verify the right side of the left matches to the main anchor frag by guaranteeing
     that only one right side is found and it is the anchor frag and vise versa for the right matches
     :param matching_info: [list[dict]] the list of fragment information that matched with the anchor fragment
-    :param list_of_fragments: [list] the list of fragment strings i.e. decoded_frags.copy()
+    :param list_of_fragments: [list[str]] the list of fragment strings i.e. decoded_frags.copy()
     :param anchor_fragment: [str] the anchor fragment string that needs a match verification
     :param fixed_length: [int] is the most common substring length
     :param verify_left: [boolean] if True will try to find matches to the left of the anchor
@@ -148,29 +198,45 @@ def assemble_permutations(permutations, fragments, fixed_length, left_anchor_ind
     max_overlap = fixed_length - 1
     complete_fragment_size = len(fragments)
     # from the permutations we use the left anchor as the starting point every time assuming we found the left anchor
+    space_check = set(" ")
+    acceptable_spaces = [4, 8, 12, 16]
     assemblies = []
     for permutation in permutations:
         if len(permutation) == complete_fragment_size:
             assembly = fragments[left_anchor_index]
-            del permutation[0]
+            del permutation[0]  # remove left anchor from assembly list
             for i in permutation:
+                frag = fragments[i]
                 for j in range(max_overlap, 2, -1):
-                    if assembly[-j:] == fragments[i][:j]:  # check for match right of anchor
-                        assembly = assembly + fragments[i][j:]
+                    anchor_overlap = assembly[-j:]
+                    right_overlap = frag[:j]
+                    spliced_frag = frag[j:]
+                    if anchor_overlap == right_overlap:  # check for match right of anchor
+                        if set(right_overlap) == space_check:
+                            anchor_spaces = 0
+                            frag_spaces = 0
+                            for k in range(len(assembly)-1, 0, -1):
+                                if assembly[k] == " ":
+                                    anchor_spaces += 1
+                                else:
+                                    break
+                            for k in range(0, len(spliced_frag)):
+                                if spliced_frag[k] == " ":
+                                    frag_spaces += 1
+                                else:
+                                    break
+                            total_spaces = anchor_spaces + frag_spaces
+                            if total_spaces in acceptable_spaces:
+                                assembly = assembly + frag[j:]
+                                break
+                            else:
+                                continue
+                        assembly = assembly + frag[j:]
                         break
             validate = validate_parantheses(assembly)
             if validate:
                 assemblies.append(assembly)
-    all_scores = []
-    for assembly in assemblies:
-        space_scoring = score_spaces(assembly)
-        all_scores.append(space_scoring)
-
-    best_score_index = [i for i, value in enumerate(all_scores) if value == 1]
-    final_assemblies = []
-    for k in best_score_index:
-        final_assemblies.append(assemblies[k])
-    return final_assemblies
+    return assemblies
 
 
 def validate_parantheses(document):
@@ -189,26 +255,21 @@ def validate_parantheses(document):
     return len(stack) == 0
 
 
-def score_spaces(document):
-    # the more positive the score the more spacing issues occurred
-    valid_spacing = [1, 4, 8, 12, 16]
-    count = 0
-    check = []
-    for character in document:
-        if character == " ":
-            count += 1
-        elif count > 0:
-            check.append(count)
-            count = 0
-    score = 0
-    for spacing in check:
-        if spacing not in valid_spacing:
-            min_score = min([abs(i - spacing) for i in valid_spacing])
-            score += min_score
-    return score
-
-
 def assemble_frags(decoded_frags):
+    """
+    Description:
+    Used to reassemble a text file that has been fragmented into a series of fixed length substrings
+    which are guaranteed to overlap by at least 3 characters and not to be identical.
+    The final fragment is likely to have less characters than the other substrings.
+    The order of the fragments can also be shuffled.
+    :param decoded_frags: [list[str]] the list of fragments that have already been URL decoded
+
+    --if the permutations were narrowed down to one solution
+    :return: reassembled_file: [str] the fragments reassembled and combined into a string
+
+    --if multiple permutations are all viable solutions based on the constraints
+    :return: assembled_permutations: [list[str]] list of the different reassembled fragment solutions
+    """
     decoded_frags_lengths = [len(frag) for frag in decoded_frags]
     fixed_substring_len = Counter(decoded_frags_lengths).most_common(1)[0][0]
     first_assemble = True
@@ -220,8 +281,8 @@ def assemble_frags(decoded_frags):
             main_anchor_frag = temp_decoded_frags.pop(k)
             anchor_match_info = find_matches(temp_decoded_frags, main_anchor_frag, fixed_substring_len)
             combine_frags = main_anchor_frag
-            # verify if any matches are perfectly compatible i.e. verify the right side of the left matches to check
-            # that only one right side is found and it is the anchor frag
+            # verify if any matches are perfectly compatible i.e. that one of the left matches has only
+            # one right side match and it is the main_anchor_frag and vice versa for right matches
             verified_left_match = verify_matches(anchor_match_info['left_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=False, verify_right=True)
             verified_right_match = verify_matches(anchor_match_info['right_matches'], decoded_frags.copy(), main_anchor_frag, fixed_substring_len, verify_left=True, verify_right=False)
             if verified_left_match is None and verified_right_match is None:
@@ -243,19 +304,21 @@ def assemble_frags(decoded_frags):
                 decoded_frags.append(combine_frags)
                 break
             elif k == num_of_fragments - 1:
-                print("No more perfect matches can be found...checking permutations")
                 assembled_permutations = find_best_combination(no_matches_info, decoded_frags, fixed_substring_len)
                 return assembled_permutations
         if len(decoded_frags) == 1:
             first_assemble = False
-    return decoded_frags[0]
+    reassembled_file = decoded_frags[0]
+    return reassembled_file
 
 
 if __name__ == "__main__":
-    frags = ['// Sample progr', 'program\npublic ', 'ublic class Hel', 'lass HelloWorld', 'elloWorld {\n   ',
-             'd {\n    public ', 'public static v', 'c static void m', 'id main(String[', '(String[] args)',
-             'args) {\n       ', '      // Prints', '// Prints "Hell', 'ts "Hello, Worl', ', World" to the',
-             '" to the termin', 'rminal window.\n', 'ow.\n        Sys', '       System.o', 'stem.out.printl',
-             'intln("Hello, W', 'o, World");\n   ', 'rld");\n    }\n}\n', ';\n    }\n}\n']
-    assembled_perms = assemble_frags(frags)
+    from urllib.parse import unquote_plus
+    with open("../frag_files/hello-ordered-frags.txt", 'r') as file:
+        fragments = [unquote_plus(line[:-1]) for line in file]
+    assembled_fragments = assemble_frags(fragments)
+    # fragments = ['//+Sample+program\npublic+class+HelloWorld+{\n++++public+static+void+main(String[]+args)+{\n+++++++',
+    #              '++++++//+Prints+"Hello,+World"+to+the+terminal+window.\n++++++++System.out.println("Hello,+World");'
+    #              '\n++++}\n}\n']
+    # assembled_fragments = assemble_frags(fragments)
 
