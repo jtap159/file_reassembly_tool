@@ -1,5 +1,4 @@
 # KBase - Tech Challenge
-
 ## Table of contents
 * [General info](#general-info)
 * [Technologies](#technologies)
@@ -16,7 +15,9 @@ The 2 tasks below allow me to demonstrate my programming skills for review by th
 * Task 2: create a simple web service that uses the program from task 1, for more details see [Task 2 Usage](#task-2-usage)
 
 ## Technologies
-Project is created with:
+**Requires:** Python Version 3.6, 3.7 or 3.8 <br />
+<br />
+Project was created with:
 * Operating System: Linux, Ubuntu 18.04.3 LTS
 * Python version: 3.7.3
 * Flask 1.1.2
@@ -43,6 +44,17 @@ If Pipenv is not installed use:
  ```bash
 $ pip install pipenv
  ```
+
+By default, the Pipfile has a requirement for python version 3.7
+
+```
+[requires]
+python_version = "3.7"
+```
+
+Make sure this version number matches the version of python you are using 
+(dependencies require python version 3.6, 3.7 or 3.8). Change the number if necessary and save the Pipfile
+
 Then, create the virtual environment with:
 
 ```bash
@@ -175,6 +187,7 @@ years and work on areas i have neglected as well.
 multiple scopes and looping iterations
 * I have never used gitlab before but it was easy to learn and gave me exposure to a different remote repository
 solution other than github.
+* Also, I learned about testing my programs with different versions of python using Anacondas environments.
 * Overall i had fun solving this problem and look forward to solving many other problems like this in the future.
 
 Cheers! <br />
