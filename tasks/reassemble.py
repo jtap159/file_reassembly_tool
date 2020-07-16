@@ -370,6 +370,6 @@ def assemble_frags(decoded_frags):
 
 if __name__ == "__main__":
     from urllib.parse import unquote_plus
-    with open("../frag_files/hello-ordered-frags.txt", 'r') as file:
+    with open("../frag_files/chopfile-frags.txt", 'r') as file:
         file_fragments = [unquote_plus(line[:-1]) for line in file]
     assembled_fragments = assemble_frags(file_fragments)

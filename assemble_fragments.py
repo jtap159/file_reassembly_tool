@@ -10,4 +10,10 @@ with open(args.file, 'r') as file:
     fragments = [unquote_plus(line[:-1]) for line in file]
 
 assemble_frags = assemble_frags(fragments)
-print(assemble_frags)
+if type(assemble_frags) == str:
+    print(assemble_frags)
+else:
+    for i, solution in enumerate(assemble_frags):
+        print(f"-----------------------Solution {i+1}----------------------------------")
+        print(solution)
+    print(f"{len(assemble_frags)} Possible Solutions Found (see solutions above) \n")
