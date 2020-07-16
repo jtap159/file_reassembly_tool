@@ -1,6 +1,6 @@
 import argparse
 from urllib.parse import unquote_plus
-from tasks.reassemble import assemble_frags
+import tasks
 
 parser = argparse.ArgumentParser(description='Used to reassemble a fragmented file')
 parser.add_argument("file", type=str, help='the directory location of the text file with the fragments')
@@ -9,11 +9,13 @@ args = parser.parse_args()
 with open(args.file, 'r') as file:
     fragments = [unquote_plus(line[:-1]) for line in file]
 
-assemble_frags = assemble_frags(fragments)
-if type(assemble_frags) == str:
-    print(assemble_frags)
+assembled_fragments = tasks.assemble_frags(fragments)
+if type(assembled_fragments) == str:
+    print(assembled_fragments)
 else:
-    for i, solution in enumerate(assemble_frags):
+    for i, solution in enumerate(assembled_fragments):
         print(f"-----------------------Solution {i+1}----------------------------------")
         print(solution)
-    print(f"{len(assemble_frags)} Possible Solutions Found (see solutions above) \n")
+    print(f"{len(assembled_fragments)} Possible Solutions Found (see solutions above) \n")
+
+
