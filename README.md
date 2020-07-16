@@ -44,4 +44,3 @@ The single input parameters for each file to be reassembled can be found in
 ```bash
  kbase-challange/delim_files/
  ```
-'''
