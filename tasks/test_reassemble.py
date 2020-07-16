@@ -1,6 +1,5 @@
 from urllib.parse import unquote_plus
-from reassemble import assemble_frags
-
+import tasks
 
 hello_frags = ['// Sample program\npublic class HelloWorld {\n    public static void main(String[] args) {\n        // '
                'Prints "Hello, World" to the terminal window.\n        System.out.println("Hello, World");\n    }\n}\n']
@@ -34,20 +33,33 @@ shake_frags = ["The quality of mercy is not strain'd,\nIt droppeth as the gentle
                "mercy. I have spoke thus much\nTo mitigate the justice of thy plea;\nWhich if thou follow, this strict "
                "court of Venice\nMust needs give sentence 'gainst the merchant there."]
 
+chop_frags = ['#!/usr/bin/env python\n#\n# Chop up the input text into 15 character substrings with overlap\nimport '
+              'random\nimport urllib\nimport sys\n\nsourceText = ""\nwith open(sys.argv[1], \'r\') as f:\n    '
+              'sourceText += f.read()\n    srcLen = len(sourceText)\n    start = 0\n    fragLen = 0\n    last = 0\n    '
+              'frags = []\n    while last < srcLen:\n        fragLen = 15\n        '
+              'frags.append(urllib.quote_plus(sourceText[start:start+fragLen]))\n        '
+              'last = start + fragLen - 1\n        offset = random.randint(5, 11)\n        '
+              'start = start+offset\n    random.shuffle(frags)\n    print "\\n".join(frags)\n']
+
 
 def test_assemble_frags():
     with open("../frag_files/hello-ordered-frags.txt", 'r') as file:
         fragments = [unquote_plus(line[:-1]) for line in file]
-    assert assemble_frags(fragments) == hello_frags[0]
+    assert tasks.assemble_frags(fragments) == hello_frags[0]
 
     with open("../frag_files/hello-frags.txt", 'r') as file:
         fragments = [unquote_plus(line[:-1]) for line in file]
-    assert assemble_frags(fragments) == hello_frags[0]
+    assert tasks.assemble_frags(fragments) == hello_frags[0]
 
     with open("../frag_files/IpsumLorem-short-frags.txt", 'r') as file:
         fragments = [unquote_plus(line[:-1]) for line in file]
-    assert assemble_frags(fragments) == ipsumlorem_short_frags[0]
+    assert tasks.assemble_frags(fragments) == ipsumlorem_short_frags[0]
 
     with open("../frag_files/Shake-frags.txt", 'r') as file:
         fragments = [unquote_plus(line[:-1]) for line in file]
-    assert assemble_frags(fragments) == shake_frags[0]
+    assert tasks.assemble_frags(fragments) == shake_frags[0]
+
+    with open("../frag_files/chopfile-frags.txt", 'r') as file:
+        fragments = [unquote_plus(line[:-1]) for line in file]
+    assemble_fragments = tasks.assemble_frags(fragments)
+    assert assemble_fragments[5] == chop_frags[0] and len(assemble_fragments) == 17
