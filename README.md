@@ -111,7 +111,9 @@ public class HelloWorld {
 
 ```
 
-**Note:** the fragmented text files can be anywhere on the computer, only the proper <text-file-location> needs to be used
+**Note:** the fragmented text files can be anywhere on the computer, 
+only the proper "text-file-location" needs to be used. 
+Also if reassembling the file is not possible then all of the best possible reassembles will be displayed
 ## Task 2 Usage
 Description: <br />
 Take the program you have from task 1, and turn it into a very simple web service that accepts a POST method 
