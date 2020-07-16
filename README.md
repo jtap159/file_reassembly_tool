@@ -26,7 +26,7 @@ Project is created with:
 ## Installation and Setup
 Open Terminal. <br />
 Change the current working directory to the location where you want the cloned repository. <br />
-clone the repository with git:
+Clone the repository with git:
 
 ```bash
 $ git clone https://gitlab.com/JTap159/kbase-challange.git
@@ -146,7 +146,8 @@ http://127.0.0.1:5000/reassemble_frags?fragments=...
 
 **Example:**<br />
 Using the hello-ordered-frags_delim.txt file copy and paste the line in the file into 
-the post request parameter.
+the post request parameter value related to the "fragment" key. 
+The URL should look like this:
 
 ```
 http://127.0.0.1:5000/reassemble_frags?fragments=%2F%2F+Sample+progr,,, program%0Apublic+,,, ublic+class+Hel,,, 
