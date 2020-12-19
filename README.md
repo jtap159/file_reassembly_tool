@@ -30,13 +30,13 @@ Change the current working directory to the location where you want the cloned r
 Clone the repository with git:
 
 ```bash
-$ git clone https://gitlab.com/JTap159/kbase-challange.git
+$ git clone https://github.com/jtap159/file-reassembly-tool.git
 ```
 
 cd to the project directory.
 
 ```bash
-$ cd kbase-challange/
+$ cd file-reassembly-tool/
 ```
 
 If Pipenv is not installed use:
@@ -82,13 +82,13 @@ one of the fixed length substrings. Read this input file and then output the re-
 cd to the project directory in the terminal (terminal should look like this).
 
 ```bash
-(kbase-challange) (base) jeremy@jeremy-Ubuntu:~/Desktop/kbase-challange$
+(file-reassembly-tool) (base) jeremy@jeremy-Ubuntu:~/Desktop/file-reassembly-tool$
 ```
 
 All of the fragmented text files are in the frag_files folder:
 
 ```
-kbase-challange/frag_files/
+file-reassembly-tool/frag_files/
 ```
 
 To reassemble a fragmented text file use below code passing in one argument <text-file-location>
@@ -100,7 +100,7 @@ $ python assemble_fragments.py <text-file-location>
 **Example:** <br />
 result will be printed to the terminal window:
 ```bash
-(kbase-challange) (base) jeremy@jeremy-Ubuntu:~/Desktop/kbase-challange$ python assemble_fragments.py frag_files/hello-ordered-frags.txt 
+(file-reassembly-tool) (base) jeremy@jeremy-Ubuntu:~/Desktop/file-reassembly-tool$ python assemble_fragments.py frag_files/hello-ordered-frags.txt 
 // Sample program
 public class HelloWorld {
     public static void main(String[] args) {
@@ -123,7 +123,7 @@ as the response body. Your web service should be able to be started from the com
 cd to the project directory in the terminal (terminal should look like this).
 
 ```bash
-(kbase-challange) (base) jeremy@jeremy-Ubuntu:~/Desktop/kbase-challange$
+(file-reassembly-tool) (base) jeremy@jeremy-Ubuntu:~/Desktop/file-reassembly-tool$
 ```
 
 To start the web service locally:
@@ -135,7 +135,7 @@ $ flask run
 The terminal window should display the below information:
 
 ```bash
-(kbase-challange) (base) jeremy@jeremy-Ubuntu:~/Desktop/kbase-challange$ flask run
+(file-reassembly-tool) (base) jeremy@jeremy-Ubuntu:~/Desktop/file-reassembly-tool$ flask run
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
    Use a production WSGI server instead.
@@ -148,7 +148,7 @@ between each fragment so that the fragments can be passed to the web service as 
 The transformed files are located:
 
 ```
-kbase-challange/delim_files/
+file-reassembly-tool/delim_files/
 ```
 
 Use [Postman](https://www.postman.com/) to send a post request of the fragments as a single input parameter.
@@ -179,18 +179,12 @@ public class HelloWorld {
 }
 
 ```
-**Note:** if reassembling the file is not possible then all of the best possible reassembles will be returned
+**Note:** if reassembling the file is not possible then all of the best possible solutions will be returned
 
 ## Lessons Learned
-* Firstly, thank you for your time to review my application
 * This was a great challenge for me to be able to use many of the problem solving skills i have gained in the past few
 years and work on areas i have neglected as well.
 * Using the debugger in pycharm was crucial for the completion of this project, for example: debugging through 
 multiple scopes and looping iterations
-* I have never used gitlab before but it was easy to learn and gave me exposure to a different remote repository
-solution other than github.
 * Also, I learned about testing my programs with different versions of python using Anacondas environments.
 * Overall i had fun solving this problem and look forward to solving many other problems like this in the future.
-
-Cheers! <br />
--Jeremy Tapia
