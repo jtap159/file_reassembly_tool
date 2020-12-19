@@ -1,4 +1,4 @@
-# KBase - Tech Challenge
+# file-reassembly-tool
 ## Table of contents
 * [General info](#general-info)
 * [Technologies](#technologies)
@@ -8,7 +8,7 @@
 * [Lessons Learned](#lessons-learned)
 
 ## General info
-The 2 tasks below allow me to demonstrate my programming skills for review by the KBase interview panel.
+The 2 tasks below allow me to demonstrate my programming skills
 
 * Task 1: reassemble a text file that has been fragmented, for more details see [Task 1 Usage](#task-1-usage)
 
