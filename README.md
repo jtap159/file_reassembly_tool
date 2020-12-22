@@ -1,4 +1,6 @@
 # file-reassembly-tool
+**NOTE** This repo is not setup as an installable package, for future imporvements I will be updating this repo to be an installable flask app. This project
+was to simply solve the below tasks.
 ## Table of contents
 * [General info](#general-info)
 * [Technologies](#technologies)
